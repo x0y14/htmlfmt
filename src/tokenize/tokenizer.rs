@@ -81,6 +81,10 @@ impl Tokenizer {
         return false;
     }
 
+    fn is_alphanum_(&self) -> bool {
+        return self.current().is_alphanumeric() || self.current() == '_';
+    }
+
     fn consume_string(&mut self, is_single: bool) -> String {
         let mut s: String = "".to_string();
 
@@ -148,6 +152,27 @@ impl Tokenizer {
         return s;
     }
 
+    fn consume_text(&mut self) -> String {
+        let mut s: String = "".to_string();
+
+        if !self.is_alphanum_() {
+            s = self.current().to_string();
+            self.move_horizon(1);
+            return s;
+        }
+
+        while !self.is_eof() {
+            if self.is_alphanum_() {
+                s += &*self.current().to_string();
+                self.move_horizon(1);
+            } else {
+                break;
+            }
+        }
+
+        return s;
+    }
+
     fn link_white_token<'a>(
         &mut self,
         cur: &'a mut Token,
@@ -176,6 +201,50 @@ impl Tokenizer {
         return cur.next.as_mut().unwrap();
     }
 
+    fn link_decimal_token<'a>(
+        &mut self,
+        cur: &'a mut Token,
+        pos: Position,
+        f: f64,
+    ) -> &'a mut Box<Token> {
+        let tok: Token = Token::new(TokenKind::Decimal, pos.clone(), "".to_string(), f, 0);
+        cur.next = Some(Box::new(tok));
+        return cur.next.as_mut().unwrap();
+    }
+
+    fn link_integer_token<'a>(
+        &mut self,
+        cur: &'a mut Token,
+        pos: Position,
+        i: i64,
+    ) -> &'a mut Box<Token> {
+        let tok: Token = Token::new(TokenKind::Integer, pos.clone(), "".to_string(), 0 as f64, i);
+        cur.next = Some(Box::new(tok));
+        return cur.next.as_mut().unwrap();
+    }
+
+    fn link_string_token<'a>(
+        &mut self,
+        cur: &'a mut Token,
+        pos: Position,
+        s: String,
+    ) -> &'a mut Box<Token> {
+        let tok: Token = Token::new(TokenKind::String, pos.clone(), s, 0 as f64, 0);
+        cur.next = Some(Box::new(tok));
+        return cur.next.as_mut().unwrap();
+    }
+
+    fn link_text_token<'a>(
+        &mut self,
+        cur: &'a mut Token,
+        pos: Position,
+        s: String,
+    ) -> &'a mut Box<Token> {
+        let tok: Token = Token::new(TokenKind::Text, pos.clone(), s, 0 as f64, 0);
+        cur.next = Some(Box::new(tok));
+        return cur.next.as_mut().unwrap();
+    }
+
     fn link_eof_token<'a>(&mut self, cur: &'a mut Token, pos: Position) -> &'a mut Box<Token> {
         let tok: Token = Token::new(TokenKind::Eof, pos.clone(), "".to_string(), 0 as f64, 0);
         cur.next = Some(Box::new(tok));
@@ -193,16 +262,51 @@ impl Tokenizer {
 
         let mut cur: &mut Token = &mut head;
         while !self.is_eof() {
+            // whitespace
             if self.is_white() {
                 let ws: String = self.consume_white();
                 cur = self.link_white_token(cur, self.pos.clone(), ws);
                 continue;
             }
+
+            // symbol
             if self.is_symbol() {
                 let sym: String = self.consume_symbol();
                 cur = self.link_symbol_token(cur, self.pos.clone(), sym);
                 continue;
             }
+
+            // string
+            if self.current() == '\'' {
+                let s: String = self.consume_string(true);
+                cur = self.link_string_token(cur, self.pos.clone(), s);
+                continue;
+            }
+            if self.current() == '"' {
+                let s: String = self.consume_string(false);
+                cur = self.link_string_token(cur, self.pos.clone(), s);
+                continue;
+            }
+
+            // integer/decimal
+            if self.is_number() {
+                let f_b: (f64, bool) = self.consume_numeric();
+                if f_b.1 {
+                    // include dot
+                    // f.0 is decimal
+                    cur = self.link_decimal_token(cur, self.pos.clone(), f_b.0);
+                } else {
+                    // not include dot
+                    // f.0 is integer
+                    cur = self.link_integer_token(cur, self.pos.clone(), f_b.0 as i64);
+                }
+                continue;
+            }
+
+            // 直書きの文字
+            let text = self.consume_text();
+            cur = self.link_text_token(cur, self.pos.clone(), text);
+            continue;
         }
 
         cur = self.link_eof_token(cur, self.pos.clone());
@@ -217,7 +321,7 @@ mod tests {
 
     #[test]
     fn tokenize() {
-        let input = " <> ";
+        let input = "<h1>hello, world</h1>";
         let mut tokenizer = Tokenizer::new(input);
         let token = tokenizer.tokenize();
         println!("{:#?}", token)
