@@ -1,14 +1,13 @@
 use crate::tokenize::kind::TokenKind;
 use crate::tokenize::position::Position;
-use std::ptr::null;
 
-#[derive(Debug, Clone)]
-pub(crate) struct Token {
-    kind: TokenKind,
-    pos: Position,
-    imm_s: String,
-    imm_f: f64,
-    imm_i: i64,
+#[derive(Debug, Clone, PartialEq)]
+pub struct Token {
+    pub(crate) kind: TokenKind,
+    pub(crate) pos: Position,
+    pub(crate) imm_s: String,
+    pub(crate) imm_f: f64,
+    pub(crate) imm_i: i64,
     pub(crate) next: Option<Box<Token>>,
 }
 

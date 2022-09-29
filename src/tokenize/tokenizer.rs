@@ -3,7 +3,7 @@ use crate::tokenize::position::Position;
 use crate::tokenize::token::Token;
 use std::str::Chars;
 
-struct Tokenizer {
+pub struct Tokenizer {
     target: String,
     pos: Position,
 }
@@ -193,7 +193,7 @@ impl Tokenizer {
         let tok: Token = Token::new(
             symbol_kind(symbol.as_str()),
             pos.clone(),
-            "".to_string(),
+            symbol,
             0 as f64,
             0,
         );

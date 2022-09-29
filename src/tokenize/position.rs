@@ -1,5 +1,5 @@
-#[derive(Debug, Clone)]
-pub(crate) struct Position {
+#[derive(Debug, Clone, PartialEq)]
+pub struct Position {
     pub line_no: u32,
     pub at_line: u32,
     pub at_whole: u32,

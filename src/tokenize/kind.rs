@@ -2,7 +2,7 @@ use crate::tokenize::kind::TokenKind::{
     Amp, Assign, Exclamation, Hyphen, Illegal, Slash, TagBegin, TagEnd,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     Illegal,
     Eof,
