@@ -6,6 +6,7 @@ pub struct Node {
     pub lhs: Option<Box<Node>>,
     pub rhs: Option<Box<Node>>,
     pub children: Option<Vec<Option<Box<Node>>>>,
+    pub params: Option<Box<Node>>,
 
     pub imm_s: String,
     // pub imm_f: f64,
@@ -18,6 +19,7 @@ impl Node {
         lhs: Option<Box<Node>>,
         rhs: Option<Box<Node>>,
         children: Option<Vec<Option<Box<Node>>>>,
+        params: Option<Box<Node>>,
         s: String,
     ) -> Node {
         return Node {
@@ -25,6 +27,8 @@ impl Node {
             lhs,
             rhs,
             children,
+            params,
+            
             imm_s: s,
         };
     }
