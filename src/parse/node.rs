@@ -3,12 +3,11 @@ use crate::parse::kind::NodeKind;
 #[derive(Debug, Clone)]
 pub struct Node {
     pub kind: NodeKind,
+    pub imm_s: String,
     pub lhs: Option<Box<Node>>,
     pub rhs: Option<Box<Node>>,
     pub children: Option<Vec<Option<Box<Node>>>>,
     pub params: Option<Box<Node>>,
-
-    pub imm_s: String,
     // pub imm_f: f64,
     // pub imm_i: i64,
 }
@@ -28,7 +27,7 @@ impl Node {
             rhs,
             children,
             params,
-            
+
             imm_s: s,
         };
     }
