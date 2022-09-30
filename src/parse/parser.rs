@@ -247,6 +247,10 @@ impl Parser {
             return self.parse_decl_tag();
         }
 
+        if self.current().kind == TokenKind::Slash {
+            return Ok(None);
+        }
+
         let tag_name = match self.expect_kind(TokenKind::Text) {
             Ok(tok) => tok.imm_s.to_lowercase(),
             Err(err) => return Err(err),
@@ -280,21 +284,10 @@ impl Parser {
             Err(err) => return Err(err),
         }
 
-        let children: Option<Vec<Option<Box<Node>>>>;
-        if self.consume_kind(TokenKind::TagBegin) == None {
-            children = match self.parse_() {
-                Ok(nodes) => nodes,
-                Err(err) => return Err(err),
-            };
-
-            // "<" of close tag
-            match self.expect_kind(TokenKind::TagBegin) {
-                Ok(_) => {}
-                Err(err) => return Err(err),
-            };
-        } else {
-            children = None
-        }
+        let children: Option<Vec<Option<Box<Node>>>> = match self.parse_() {
+            Ok(c) => c,
+            Err(err) => return Err(err),
+        };
 
         // "/" of close tag
         match self.expect_kind(TokenKind::Slash) {
@@ -341,7 +334,10 @@ impl Parser {
             };
             // テキスト、あるいはタグのパースは成功しましたか?
             match nd_result {
-                Ok(nd) => nodes.push(nd),
+                Ok(nd) => match nd {
+                    Some(n) => nodes.push(Some(n)),
+                    None => break,
+                },
                 Err(err) => return Err(err),
             }
             self.consume_kind(TokenKind::Whitespace);
@@ -382,6 +378,16 @@ mod test {
 
     #[test]
     fn parse_html_tag() {
+        let mut tokenizer_ = tokenizer::Tokenizer::new("<html></html>");
+        let tok = tokenizer_.tokenize();
+
+        let mut parser_ = Parser::new();
+        let nodes = parser_.parse(tok);
+        println!("{:#?}", nodes)
+    }
+
+    #[test]
+    fn parse_html_body() {
         let mut tokenizer_ = tokenizer::Tokenizer::new("<html><body></body></html>");
         let tok = tokenizer_.tokenize();
 
